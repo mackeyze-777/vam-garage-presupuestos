@@ -224,19 +224,27 @@ const INC={
 function parseCSV(txt){const rows=[];let row=[],cur='',q=false;for(let i=0;i<txt.length;i++){const ch=txt[i];if(q){if(ch==='"'){if(txt[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur='';}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&txt[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur='';}else cur+=ch;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;}
 function priceVal(s){s=String(s||'').trim();if(!s)return 0;const n=parseFloat(s.replace(/[^\d.]/g,''));if(!isFinite(n))return 0;return s.includes('%')?Math.round(n/100):Math.round(n);}
 function catOf(t){t=(t||'').trim();if(/cer[aá]mico/i.test(t))return 'Cerámico';if(/pulido/i.test(t))return 'Pulido';if(/interior/i.test(t))return 'Interior';if(/paquete/i.test(t))return 'Paquete';return 'Adicionales';}
-function rowsToSVC(rows){const out=[];rows.forEach((r,i)=>{const name=(r[0]||'').trim(),tipo=(r[1]||'').trim(),price=priceVal(r[7]);if(!name||!tipo||tipo.toLowerCase()==='tipo'||price<=0)return;out.push({id:'s'+i,n:name,c:catOf(tipo),price,inc:INC[name]||[]});});return out;}
+// Limpia ortografía de los nombres de la hoja solo para mostrar (no cambia la hoja)
+function clean(n){return n.replace(/anios/gi,'años').replace(/ceramico/gi,'cerámico').replace(/correccion/gi,'Corrección').replace(/descontaminacion/gi,'descontaminación').replace(/\b1 años\b/g,'1 año');}
+function rowsToSVC(rows){const out=[];rows.forEach((r,i)=>{const name=(r[0]||'').trim(),tipo=(r[1]||'').trim(),price=priceVal(r[7]);if(!name||!tipo||tipo.toLowerCase()==='tipo'||price<=0)return;out.push({id:'s'+i,n:clean(name),c:catOf(tipo),price,inc:INC[name]||[]});});return out;}
+// Servicios que aún NO están en la hoja (se agregan a mano hasta que Mackey los meta a la hoja)
+const EXTRAS=[
+ {id:'x-pul1cera', n:'Pulido 1 paso + Cera', c:'Pulido', price:1600, inc:['Lavado y descontaminación','Corrección a 1 paso','Aplicación de cera / sellador','Brillo profundo','Protección hidrofóbica']},
+];
 async function loadSheet(){
   const cached=localStorage.getItem('vam_presup_svc');
   if(!SVC.length) $('#lista').innerHTML='<div class="loading">Cargando precios de tu hoja…</div>';
   try{
     const res=await fetch(CSV_URL,{cache:'no-store'});
     const data=rowsToSVC(parseCSV(await res.text()));
-    if(data.length){ SVC=data; localStorage.setItem('vam_presup_svc',JSON.stringify(SVC)); $('#srcnote').textContent='Precios en vivo de tu hoja · '+SVC.length+' servicios'; }
+    if(data.length){ SVC=data; localStorage.setItem('vam_presup_svc',JSON.stringify(data)); $('#srcnote').textContent='Precios en vivo de tu hoja · '+data.length+' servicios'; }
     else if(cached){ SVC=JSON.parse(cached); $('#srcnote').textContent='Usando precios guardados'; }
   }catch(e){
     if(cached){ SVC=JSON.parse(cached); $('#srcnote').textContent='Sin conexión · precios guardados'; }
     else { $('#lista').innerHTML='<div class="loading">No se pudo leer la hoja. Revisa tu internet y dale ↻ Actualizar.</div>'; return; }
   }
+  const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
+  EXTRAS.forEach(x=>{ if(!SVC.some(s=>norm(s.n)===norm(x.n))) SVC.push(x); });
   renderLista(); updateBar();
 }
 
