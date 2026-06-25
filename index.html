@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>VAM Garage — Presupuestos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg:#050505; --bg2:#0c0c0c; --bg3:#131313; --line:#1e1e1e; --line2:#2c2c2c;
+  --accent:#e8178a; --text:#f0f0f0; --text2:#cfd0d4; --muted:#808490;
+  --green:#27c76f; --yellow:#f0a500; --red:#e04040;
+  --pad:clamp(16px,4.5vw,28px); --hh:60px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;line-height:1.5;min-height:100dvh;padding-bottom:calc(96px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding:0 var(--pad)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+header{position:sticky;top:0;z-index:30;background:rgba(5,5,5,.85);backdrop-filter:blur(14px);border-top:3px solid var(--accent);border-bottom:1px solid var(--line)}
+.hd{display:flex;align-items:center;gap:12px;padding:11px 0}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--accent);color:#050505;display:grid;place-items:center;font-weight:800;font-size:19px;flex-shrink:0}
+.hd h1{font-size:16px;font-weight:800;letter-spacing:.3px}
+.hd p{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:1px}
+
+h2.sec{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin:22px 0 12px;display:flex;align-items:center;gap:10px}
+h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.seg{display:flex;gap:8px;margin:18px 0 6px}
+.seg button{flex:1;min-height:48px;background:var(--bg2);border:1px solid var(--line);color:var(--text2);font:inherit;font-weight:700;font-size:15px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
+.seg button .ic{font-size:18px}
+.seg button.on{background:var(--accent);color:#050505;border-color:var(--accent)}
+.seg button:active{transform:scale(.98)}
+
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700}
+.fld input{background:var(--bg2);border:1px solid var(--line);border-radius:10px;height:46px;padding:0 13px;color:var(--text);font:inherit;font-size:15px}
+.fld input:focus{outline:none;border-color:var(--accent)}
+.fld input::placeholder{color:#5b5f6b}
+
+.search{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:0 13px;height:46px;margin-bottom:12px}
+.search svg{color:var(--muted);flex-shrink:0}
+.search input{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:15px}
+.search input::placeholder{color:#5b5f6b}
+
+.catg{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700;margin:16px 0 8px}
+.svc{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.svc:active{background:var(--bg3)}
+.svc.on{border-color:var(--accent);background:rgba(232,23,138,.06)}
+.svc .ck{width:24px;height:24px;border-radius:7px;border:2px solid var(--line2);flex-shrink:0;display:grid;place-items:center;transition:.15s}
+.svc.on .ck{background:var(--accent);border-color:var(--accent)}
+.svc .ck svg{width:14px;height:14px;opacity:0;transform:scale(.5);transition:.15s}
+.svc.on .ck svg{opacity:1;transform:scale(1)}
+.svc .nm{flex:1;min-width:0}
+.svc .nm b{font-weight:600;font-size:14.5px;display:block}
+.svc .nm small{font-size:11.5px;color:var(--muted)}
+.svc .pr{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.svc .pr span{color:var(--muted);font-size:13px}
+.svc .pr input{width:78px;background:var(--bg3);border:1px solid var(--line);border-radius:8px;height:36px;padding:0 8px;color:var(--text);font:inherit;font-weight:700;font-size:14px;text-align:right}
+.svc .pr input:focus{outline:none;border-color:var(--accent)}
+
+.notes{margin-top:8px}
+.notes textarea{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:12px 13px;color:var(--text);font:inherit;font-size:14px;resize:vertical;min-height:64px}
+.notes textarea:focus{outline:none;border-color:var(--accent)}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(5,5,5,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom))}
+.bar-in{max-width:780px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.bar .tot{flex:1}
+.bar .tot .c{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.bar .tot .v{font-size:22px;font-weight:800;line-height:1.1}
+.bar button{min-height:50px;background:var(--accent);color:#050505;border:0;font:inherit;font-weight:800;font-size:15px;padding:0 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.bar button:disabled{background:var(--bg3);color:var(--muted);cursor:not-allowed}
+.bar button:not(:disabled):active{transform:scale(.97)}
+
+/* ===== Cotización (preview + imagen) ===== */
+.ov{position:fixed;inset:0;z-index:100;display:none;background:rgba(0,0,0,.8);backdrop-filter:blur(7px);overflow:auto;padding:16px 12px 40px}
+.ov.open{display:block}
+.ov-panel{max-width:560px;margin:0 auto}
+.ov-act{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.ov-act button{min-height:44px;border:1px solid var(--line2);background:var(--bg2);color:var(--text);font:inherit;font-weight:700;font-size:13.5px;padding:0 16px;border-radius:11px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.ov-act button.go{background:var(--green);color:#04210f;border-color:var(--green)}
+.ov-act button:active{transform:scale(.97)}
+
+.q{background:#fff;color:#16181d;border-radius:12px;overflow:hidden}
+.q-band{height:6px;background:var(--accent)}
+.q-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:18px 22px 14px}
+.q-brand{display:flex;gap:11px;align-items:center}
+.q-mark{width:40px;height:40px;border-radius:9px;background:#050505;color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:21px}
+.q-name{font-weight:800;font-size:15px;letter-spacing:3px}
+.q-sub{font-size:8.5px;color:#8a8d96;letter-spacing:1.4px;text-transform:uppercase;margin-top:3px}
+.q-doc{text-align:right}
+.q-doc-t{font-weight:800;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+.q-doc-s{font-size:9px;color:#777;margin-top:4px;line-height:1.5}
+.q-cli{margin:0 22px;padding:13px 0;border-top:1px solid #e9eaed;border-bottom:1px solid #e9eaed;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+.q-cli .r{font-size:12px}
+.q-cli .r b{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:1px;color:#9a9da4;margin-bottom:2px;font-weight:700}
+.q-svcs{padding:6px 22px 0}
+.q-it{padding:11px 0;border-bottom:1px solid #f0f1f3}
+.q-it .top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.q-it .top b{font-size:13.5px;font-weight:700}
+.q-it .top .p{font-size:14px;font-weight:800;white-space:nowrap}
+.q-it ul{list-style:none;margin-top:5px;display:flex;flex-wrap:wrap;gap:3px 12px}
+.q-it li{font-size:10.5px;color:#6a6e76;display:flex;gap:4px;align-items:baseline}
+.q-it li::before{content:"✓";color:var(--accent);font-weight:800;font-size:9px}
+.q-tot{display:flex;justify-content:space-between;align-items:center;margin:6px 22px 0;padding:14px 0 4px}
+.q-tot .l{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#777;font-weight:700}
+.q-tot .v{font-size:26px;font-weight:800;color:#16181d}
+.q-note{margin:10px 22px 0;font-size:10px;color:#888c93;line-height:1.5}
+.q-cond{margin:12px 22px 0;padding:10px 13px;background:#fdeef6;border:1px solid var(--accent);border-radius:8px;font-size:11px;font-weight:700;color:#a31368;display:flex;gap:7px;align-items:center}
+.q-foot{margin-top:12px;padding:11px 22px 20px;border-top:1px solid #eef0f2;font-size:10px;color:#9a9da4;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.empty-q{text-align:center;color:var(--muted);padding:40px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--green);color:#04210f;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;z-index:200;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header><div class="wrap hd">
+  <div class="logo">V</div>
+  <div><h1>VAM Garage</h1><p>Presupuestos</p></div>
+</div></header>
+
+<main class="wrap">
+  <div class="seg" id="seg">
+    <button data-t="a" class="on"><span class="ic">🚗</span> Auto</button>
+    <button data-t="m"><span class="ic">🚙</span> Camioneta / SUV</button>
+  </div>
+
+  <h2 class="sec">Datos del cliente</h2>
+  <div class="fields">
+    <div class="fld full"><label>Nombre del cliente</label><input id="f-nom" placeholder="Ej. Juan Pérez"></div>
+    <div class="fld"><label>Placa</label><input id="f-pla" placeholder="ABC-123-A"></div>
+    <div class="fld"><label>Fecha</label><input id="f-fec" type="date"></div>
+    <div class="fld full"><label>Vehículo (marca y modelo)</label><input id="f-veh" placeholder="Ej. Toyota Hilux 2023"></div>
+    <div class="fld full"><label>WhatsApp del cliente (opcional)</label><input id="f-tel" type="tel" placeholder="10 dígitos" inputmode="numeric"></div>
+  </div>
+
+  <h2 class="sec">Servicios</h2>
+  <div class="search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="f-buscar" type="search" placeholder="Buscar servicio…" autocomplete="off">
+  </div>
+  <div id="lista"></div>
+
+  <h2 class="sec">Notas (opcional)</h2>
+  <div class="notes"><textarea id="f-notas" placeholder="Ej. Incluye lavado de cortesía · Aplica descuento por paquete"></textarea></div>
+</main>
+
+<div class="bar"><div class="bar-in">
+  <div class="tot"><div class="c"><span id="b-cnt">0</span> servicios</div><div class="v" id="b-tot">$0</div></div>
+  <button id="b-ver" disabled>Ver cotización →</button>
+</div></div>
+
+<div class="ov" id="ov"><div class="ov-panel">
+  <div class="ov-act">
+    <button class="go" id="a-share">📲 Compartir imagen</button>
+    <button id="a-wa">💬 WhatsApp (texto)</button>
+    <button id="a-dl">⬇️ Imagen</button>
+    <button id="a-close">✕ Cerrar</button>
+  </div>
+  <div class="q" id="quote"></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SVC=[
+ {id:'express',n:'Express Detail Wash',c:'Lavado',a:350,m:450,inc:['Enjuague a presión','Lavado con shampoo premium','Descontaminación básica','Secado con microfibra','Brillo final']},
+ {id:'pul1p',n:'Pulido 1 Paso',c:'Pulido',a:800,m:1000,inc:['Lavado y descontaminación','Corrección 1 paso','Acabado brillo']},
+ {id:'showroom',n:'Acabado Showroom',c:'Pulido',a:1200,m:1500,inc:['Lavado y descontaminación','Corrección 1 paso','Acabado brillo profundo','Efecto hidrofóbico','Protección UV aprox. 6 meses']},
+ {id:'pul2p',n:'Pulido 2 Pasos',c:'Pulido',a:1200,m:1500,inc:['Lavado y descontaminación','Clay bar','Corrección paso 1 cutting','Corrección paso 2 refinado','Acabado alta gloss']},
+ {id:'pul3en1',n:'Pulido 3-en-1',c:'Pulido',a:1500,m:1900,inc:['Lavado y descontaminación','Corrección 1 paso','Refinado de pintura','Acabado gloss alto brillo','Protección final']},
+ {id:'cer-wrap',n:'Blindaje Cerámico para Wrap',c:'Cerámico',a:1200,m:1600,inc:['Lavado del wrap','Descontaminación de vinil','Aplicación cerámico especializado','Protección UV','Facilita limpieza futura']},
+ {id:'cer1p1a',n:'1 Paso + Cerámico 1 Año',c:'Cerámico',a:2500,m:3200,inc:['Lavado y descontaminación','Eco Wash','Clay bar','Corrección 1 paso','Aplicación CanCoat Evo','Garantía 1 año','Inspección con luz']},
+ {id:'cer-mate',n:'Cerámico Mate 2 Años',c:'Cerámico',a:3500,m:4500,inc:['Descontaminación','Clay bar','Preparación especial para mate','Aplicación cerámico mate','Garantía 2 años']},
+ {id:'cer1p3a',n:'1 Paso + Cerámico 3 Años',c:'Cerámico',a:3800,m:4800,inc:['Lavado y descontaminación','Clay bar','Corrección 1 paso','Aplicación cerámico 3 años','Garantía 3 años','Reporte antes/después']},
+ {id:'cer2p1a',n:'2 Pasos + Cerámico 1 Año',c:'Cerámico',a:4000,m:5000,inc:['Descontaminación completa','Clay bar','Corrección paso 1 cutting','Corrección paso 2','Aplicación CanCoat Evo','Garantía 1 año','Reporte fotográfico']},
+ {id:'cer2p3a',n:'2 Pasos + Cerámico 3 Años',c:'Cerámico',a:5000,m:6200,inc:['Descontaminación completa','Clay bar','Corrección paso 1 cutting','Corrección paso 2 refinado','Aplicación cerámico 3 años','Garantía 3 años','Reporte HD']},
+ {id:'cer2p5a',n:'2 Pasos + Cerámico 5 Años',c:'Cerámico',a:7000,m:9000,inc:['Descontaminación 4 etapas','Clay bar premium','Corrección 2 pasos nivel concurso','Aplicación Pure Evo 5 años','Garantía 5 años','Reporte HD','Kit de mantenimiento']},
+ {id:'premium',n:'Premium — Gtecnic / Pure Evo Top',c:'Premium',a:13000,m:16000,inc:['Descontaminación completa 4 etapas','Corrección 2-3 pasos nivel concurso','Gtecnic o Pure Evo top tier','Garantía 7-10 años','Reporte HD','Kit mantenimiento premium']},
+ {id:'int-cer',n:'Protección Cerámica Vestiduras',c:'Interior',a:800,m:1200,inc:['Limpieza previa de vestiduras','Aplicación cerámico para tela/piel','Protección UV','Barrera contra manchas','Garantía 1 año']},
+ {id:'int-mant',n:'Vestiduras Mantenimiento',c:'Interior',a:1200,m:1500,inc:['Aspirado completo','Limpieza de tablero y consola','Limpieza de puertas','Vidrios interiores','Fragancia final']},
+ {id:'int-avz',n:'Vestiduras Avanzado',c:'Interior',a:2800,m:3500,inc:['Extracción de asientos y tapetes','Limpieza química de plásticos','Tablero y consola','Cinturones','Desinfección con ozono','Fragancia de acabado']},
+ {id:'motor',n:'Detallado de Motor',c:'Adicionales',a:400,m:500,inc:['Protección previa de componentes eléctricos','Aplicación de desengrasante','Enjuague a presión','Secado','Acondicionamiento de plásticos y mangueras']},
+ {id:'faros',n:'Faros Relucientes',c:'Adicionales',a:500,m:600,inc:['Lijado progresivo por grados','Pulido mecánico','Sellado UV protector','Brillo restaurado','Protección aprox. 1 año']},
+ {id:'moto',n:'Moto Detail Express',c:'Adicionales',a:200,m:250,inc:['Lavado profundo y descontaminación','Limpieza de rines y neumáticos','Cera de protección','Acondicionamiento de asiento','Acabado premium']},
+];
+const CATS=['Lavado','Pulido','Cerámico','Premium','Interior','Adicionales'];
+const $=s=>document.querySelector(s);
+const money=n=>'$'+Math.round(n).toLocaleString('es-MX');
+
+let tipo='a';            // a=auto, m=camioneta
+let sel={};              // id -> precio (editado)
+let query='';
+
+// fecha hoy
+$('#f-fec').value=new Date().toISOString().slice(0,10);
+
+function priceOf(s){ return tipo==='a'?s.a:s.m; }
+
+function renderLista(){
+  const root=$('#lista'); root.innerHTML='';
+  CATS.forEach(cat=>{
+    const items=SVC.filter(s=>s.c===cat && (!query || (s.n+' '+s.c).toLowerCase().includes(query)));
+    if(!items.length) return;
+    const h=document.createElement('div'); h.className='catg'; h.textContent=cat; root.appendChild(h);
+    items.forEach(s=>{
+      const on=sel[s.id]!=null;
+      const row=document.createElement('div'); row.className='svc'+(on?' on':'');
+      row.innerHTML=`<div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="#050505" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="nm"><b>${s.n}</b><small>${s.inc.length} puntos incluidos</small></div>
+        <div class="pr"><span>$</span><input type="number" inputmode="numeric" value="${on?sel[s.id]:priceOf(s)}" data-id="${s.id}"></div>`;
+      // toggle al tocar (menos en el input)
+      row.addEventListener('click',e=>{ if(e.target.tagName==='INPUT')return; toggle(s); });
+      const inp=row.querySelector('input');
+      inp.addEventListener('click',e=>e.stopPropagation());
+      inp.addEventListener('input',e=>{ if(sel[s.id]!=null) sel[s.id]=+e.target.value||0; updateBar(); });
+      root.appendChild(row);
+    });
+  });
+}
+function toggle(s){
+  if(sel[s.id]!=null) delete sel[s.id];
+  else sel[s.id]=priceOf(s);
+  renderLista(); updateBar();
+}
+function updateBar(){
+  const ids=Object.keys(sel);
+  const tot=ids.reduce((a,id)=>a+(+sel[id]||0),0);
+  $('#b-cnt').textContent=ids.length;
+  $('#b-tot').textContent=money(tot);
+  $('#b-ver').disabled=ids.length===0;
+}
+
+$('#seg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  tipo=b.dataset.t;
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b));
+  // re-precia los seleccionados al nuevo tipo
+  Object.keys(sel).forEach(id=>{ const s=SVC.find(x=>x.id===id); sel[id]=priceOf(s); });
+  renderLista(); updateBar();
+});
+$('#f-buscar').addEventListener('input',e=>{ query=e.target.value.trim().toLowerCase(); renderLista(); });
+
+// ===== Cotización =====
+const fmtDate=iso=>{const[y,m,d]=iso.split('-');return `${d}/${m}/${y}`};
+const addDays=(iso,n)=>{const d=new Date(iso+'T00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+
+function buildQuote(){
+  const nom=$('#f-nom').value.trim()||'—';
+  const pla=($('#f-pla').value.trim().toUpperCase())||'—';
+  const veh=$('#f-veh').value.trim()||'—';
+  const fec=$('#f-fec').value||new Date().toISOString().slice(0,10);
+  const notas=$('#f-notas').value.trim();
+  const tipoLbl=tipo==='a'?'Auto':'Camioneta / SUV';
+  const folio='VAM-'+fec.slice(2).replace(/-/g,'')+'-'+new Date().toTimeString().slice(0,5).replace(':','');
+  const vig=fmtDate(addDays(fec,15));
+  const items=SVC.filter(s=>sel[s.id]!=null);
+  const tot=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const rows=items.map(s=>`<div class="q-it"><div class="top"><b>${s.n}</b><span class="p">${money(sel[s.id])}</span></div><ul>${s.inc.map(i=>`<li><span>${i}</span></li>`).join('')}</ul></div>`).join('');
+  $('#quote').innerHTML=`
+   <div class="q-band"></div>
+   <div class="q-head">
+     <div class="q-brand"><div class="q-mark">V</div><div><div class="q-name">VAM GARAGE</div><div class="q-sub">Estudio automotriz · Pachuca</div></div></div>
+     <div class="q-doc"><div class="q-doc-t">Cotización</div><div class="q-doc-s">${folio}<br>${fmtDate(fec)}</div></div>
+   </div>
+   <div class="q-cli">
+     <div class="r"><b>Cliente</b>${nom}</div>
+     <div class="r"><b>Vehículo</b>${veh} · ${tipoLbl}</div>
+     <div class="r"><b>Placa</b>${pla}</div>
+     <div class="r"><b>Vigencia</b>15 días (al ${vig})</div>
+   </div>
+   <div class="q-svcs">${rows}</div>
+   <div class="q-tot"><span class="l">Total</span><span class="v">${money(tot)} <span style="font-size:12px;color:#999;font-weight:600">MXN</span></span></div>
+   ${notas?`<div class="q-note"><b>Notas:</b> ${notas}</div>`:''}
+   <div class="q-cond">⏳ Cotización válida 15 días · sujeta a inspección física del vehículo</div>
+   <div class="q-foot"><span>📞 771 802 1389 · IG @vam.garage</span><span>Pachuca, Hidalgo</span></div>`;
+}
+function closeOv(){ $('#ov').classList.remove('open'); document.body.style.overflow=''; }
+$('#b-ver').onclick=()=>{ if(!Object.keys(sel).length)return; buildQuote(); $('#ov').classList.add('open'); document.body.style.overflow='hidden'; };
+$('#a-close').onclick=closeOv;
+$('#ov').addEventListener('click',e=>{ if(e.target.id==='ov') closeOv(); });
+addEventListener('keydown',e=>{ if(e.key==='Escape') closeOv(); });
+
+// imagen
+async function renderPng(){ const c=await html2canvas($('#quote'),{scale:2,backgroundColor:'#ffffff'}); return await new Promise(r=>c.toBlob(r,'image/png')); }
+function dl(blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cotizacion-vam.png'; a.click(); }
+async function shareImg(){
+  try{
+    const blob=await renderPng();
+    const file=new File([blob],'cotizacion-vam.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Cotización VAM Garage'}); }
+    else { dl(blob); toast('Imagen descargada — adjúntala en WhatsApp'); }
+  }catch(e){ try{ dl(await renderPng()); toast('Imagen descargada'); }catch(_){ toast('No se pudo generar la imagen'); } }
+}
+async function dlImg(){ try{ dl(await renderPng()); toast('Imagen descargada'); }catch(e){ toast('No se pudo generar la imagen'); } }
+function waText(){
+  const items=SVC.filter(s=>sel[s.id]!=null);
+  const tot=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const nom=$('#f-nom').value.trim(), veh=$('#f-veh').value.trim(), pla=$('#f-pla').value.trim().toUpperCase();
+  const tipoLbl=tipo==='a'?'Auto':'Camioneta/SUV';
+  let t='*VAM GARAGE — Cotización*\n';
+  if(nom)t+='Cliente: '+nom+'\n';
+  if(veh)t+='Vehículo: '+veh+' ('+tipoLbl+')\n';
+  if(pla)t+='Placa: '+pla+'\n';
+  t+='\n';
+  items.forEach(s=>{ t+='• '+s.n+' — '+money(sel[s.id])+'\n'; });
+  t+='\n*TOTAL: '+money(tot)+' MXN*\n';
+  t+='Vigencia: 15 días · sujeta a inspección física.\n';
+  const notas=$('#f-notas').value.trim(); if(notas)t+='Notas: '+notas+'\n';
+  t+='\n📍 Pachuca · 📞 771 802 1389 · IG @vam.garage';
+  return t;
+}
+function sendWa(){ const tel=$('#f-tel').value.replace(/\D/g,''); window.open('https://wa.me/'+(tel?('52'+tel):'')+'?text='+encodeURIComponent(waText()),'_blank'); }
+$('#a-share').onclick=shareImg;
+$('#a-dl').onclick=dlImg;
+$('#a-wa').onclick=sendWa;
+let tT; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),2600); }
+
+renderLista(); updateBar();
+</script>
+</body>
+</html>
