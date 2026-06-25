@@ -105,7 +105,10 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
 .q-it ul{list-style:none;margin-top:5px;display:flex;flex-wrap:wrap;gap:3px 12px}
 .q-it li{font-size:10.5px;color:#6a6e76;display:flex;gap:4px;align-items:baseline}
 .q-it li::before{content:"✓";color:var(--accent);font-weight:800;font-size:9px}
-.q-tot{display:flex;justify-content:space-between;align-items:center;margin:6px 22px 0;padding:14px 0 4px}
+.q-lines{margin:8px 22px 0}
+.q-line{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:#555}
+.q-line.desc{color:var(--accent);font-weight:700}
+.q-tot{display:flex;justify-content:space-between;align-items:center;margin:4px 22px 0;padding:12px 0 4px;border-top:2px solid #16181d}
 .q-tot .l{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:#777;font-weight:700}
 .q-tot .v{font-size:26px;font-weight:800;color:#16181d}
 .q-note{margin:10px 22px 0;font-size:10px;color:#888c93;line-height:1.5}
@@ -131,7 +134,7 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
   <h2 class="sec">Datos del cliente</h2>
   <div class="fields">
     <div class="fld full"><label>Nombre del cliente</label><input id="f-nom" placeholder="Ej. Juan Pérez"></div>
-    <div class="fld"><label>Placa</label><input id="f-pla" placeholder="ABC-123-A"></div>
+    <div class="fld"><label>Placa (opcional)</label><input id="f-pla" placeholder="ABC-123-A"></div>
     <div class="fld"><label>Fecha</label><input id="f-fec" type="date"></div>
     <div class="fld full"><label>Vehículo (marca y modelo)</label><input id="f-veh" placeholder="Ej. Toyota Hilux 2023"></div>
     <div class="fld full"><label>WhatsApp del cliente (opcional)</label><input id="f-tel" type="tel" placeholder="10 dígitos" inputmode="numeric"></div>
@@ -143,6 +146,14 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
     <input id="f-buscar" type="search" placeholder="Buscar servicio…" autocomplete="off">
   </div>
   <div id="lista"></div>
+
+  <h2 class="sec">Descuento</h2>
+  <div class="seg" id="segDisc">
+    <button data-d="0" class="on">Ninguno</button>
+    <button data-d="10">10%</button>
+    <button data-d="15">15%</button>
+    <button data-d="20">20%</button>
+  </div>
 
   <h2 class="sec">Notas (opcional)</h2>
   <div class="notes"><textarea id="f-notas" placeholder="Ej. Incluye lavado de cortesía · Aplica descuento por paquete"></textarea></div>
@@ -192,6 +203,7 @@ const $=s=>document.querySelector(s);
 const money=n=>'$'+Math.round(n).toLocaleString('es-MX');
 
 let tipo='a';            // a=auto, m=camioneta
+let desc=0;              // % de descuento
 let sel={};              // id -> precio (editado)
 let query='';
 
@@ -228,9 +240,10 @@ function toggle(s){
 }
 function updateBar(){
   const ids=Object.keys(sel);
-  const tot=ids.reduce((a,id)=>a+(+sel[id]||0),0);
+  const sub=ids.reduce((a,id)=>a+(+sel[id]||0),0);
+  const fin=Math.round(sub*(1-desc/100));
   $('#b-cnt').textContent=ids.length;
-  $('#b-tot').textContent=money(tot);
+  $('#b-tot').textContent=money(fin);
   $('#b-ver').disabled=ids.length===0;
 }
 
@@ -243,6 +256,7 @@ $('#seg').addEventListener('click',e=>{
   renderLista(); updateBar();
 });
 $('#f-buscar').addEventListener('input',e=>{ query=e.target.value.trim().toLowerCase(); renderLista(); });
+$('#segDisc').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return; desc=+b.dataset.d; document.querySelectorAll('#segDisc button').forEach(x=>x.classList.toggle('on',x===b)); updateBar(); });
 
 // ===== Cotización =====
 const fmtDate=iso=>{const[y,m,d]=iso.split('-');return `${d}/${m}/${y}`};
@@ -258,7 +272,8 @@ function buildQuote(){
   const folio='VAM-'+fec.slice(2).replace(/-/g,'')+'-'+new Date().toTimeString().slice(0,5).replace(':','');
   const vig=fmtDate(addDays(fec,15));
   const items=SVC.filter(s=>sel[s.id]!=null);
-  const tot=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const sub=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const fin=Math.round(sub*(1-desc/100)), dm=sub-fin;
   const rows=items.map(s=>`<div class="q-it"><div class="top"><b>${s.n}</b><span class="p">${money(sel[s.id])}</span></div><ul>${s.inc.map(i=>`<li><span>${i}</span></li>`).join('')}</ul></div>`).join('');
   $('#quote').innerHTML=`
    <div class="q-band"></div>
@@ -273,7 +288,8 @@ function buildQuote(){
      <div class="r"><b>Vigencia</b>15 días (al ${vig})</div>
    </div>
    <div class="q-svcs">${rows}</div>
-   <div class="q-tot"><span class="l">Total</span><span class="v">${money(tot)} <span style="font-size:12px;color:#999;font-weight:600">MXN</span></span></div>
+   ${desc>0?`<div class="q-lines"><div class="q-line"><span>Subtotal</span><span>${money(sub)}</span></div><div class="q-line desc"><span>Descuento ${desc}%</span><span>− ${money(dm)}</span></div></div>`:''}
+   <div class="q-tot"><span class="l">Total${desc>0?' con descuento':''}</span><span class="v">${money(fin)} <span style="font-size:12px;color:#999;font-weight:600">MXN</span></span></div>
    ${notas?`<div class="q-note"><b>Notas:</b> ${notas}</div>`:''}
    <div class="q-cond">⏳ Cotización válida 15 días · sujeta a inspección física del vehículo</div>
    <div class="q-foot"><span>📞 771 802 1389 · IG @vam.garage</span><span>Pachuca, Hidalgo</span></div>`;
@@ -298,7 +314,8 @@ async function shareImg(){
 async function dlImg(){ try{ dl(await renderPng()); toast('Imagen descargada'); }catch(e){ toast('No se pudo generar la imagen'); } }
 function waText(){
   const items=SVC.filter(s=>sel[s.id]!=null);
-  const tot=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const sub=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const fin=Math.round(sub*(1-desc/100));
   const nom=$('#f-nom').value.trim(), veh=$('#f-veh').value.trim(), pla=$('#f-pla').value.trim().toUpperCase();
   const tipoLbl=tipo==='a'?'Auto':'Camioneta/SUV';
   let t='*VAM GARAGE — Cotización*\n';
@@ -307,7 +324,8 @@ function waText(){
   if(pla)t+='Placa: '+pla+'\n';
   t+='\n';
   items.forEach(s=>{ t+='• '+s.n+' — '+money(sel[s.id])+'\n'; });
-  t+='\n*TOTAL: '+money(tot)+' MXN*\n';
+  if(desc>0){ t+='Subtotal: '+money(sub)+'\n'; t+='Descuento '+desc+'%: - '+money(sub-fin)+'\n'; }
+  t+='\n*TOTAL: '+money(fin)+' MXN*\n';
   t+='Vigencia: 15 días · sujeta a inspección física.\n';
   const notas=$('#f-notas').value.trim(); if(notas)t+='Notas: '+notas+'\n';
   t+='\n📍 Pachuca · 📞 771 802 1389 · IG @vam.garage';
