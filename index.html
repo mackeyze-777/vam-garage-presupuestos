@@ -184,7 +184,6 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
   <div class="ov-act">
     <button class="go" id="a-share">📲 Compartir imagen</button>
     <button id="a-wa">💬 WhatsApp (texto)</button>
-    <button id="a-dl">⬇️ Imagen</button>
     <button id="a-close">✕ Cerrar</button>
   </div>
   <div class="q" id="quote"></div>
@@ -332,15 +331,15 @@ addEventListener('keydown',e=>{ if(e.key==='Escape') closeOv(); });
 // imagen
 async function renderPng(){ const c=await html2canvas($('#quote'),{scale:2,backgroundColor:'#ffffff'}); return await new Promise(r=>c.toBlob(r,'image/png')); }
 function dl(blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cotizacion-vam.png'; a.click(); }
+const SHARE_MSG='Te mandamos la cotización del servicio para tu carro 🚗\n\nRecuerda que esta cotización dura 15 días. Si quieres agendar, pregúntanos por los días disponibles o aparta tu lugar lo antes posible. 🗓️\n\n— VAM Garage';
 async function shareImg(){
   try{
     const blob=await renderPng();
     const file=new File([blob],'cotizacion-vam.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Cotización VAM Garage'}); }
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'Cotización VAM Garage',text:SHARE_MSG}); }
     else { dl(blob); toast('Imagen descargada — adjúntala en WhatsApp'); }
   }catch(e){ try{ dl(await renderPng()); toast('Imagen descargada'); }catch(_){ toast('No se pudo generar la imagen'); } }
 }
-async function dlImg(){ try{ dl(await renderPng()); toast('Imagen descargada'); }catch(e){ toast('No se pudo generar la imagen'); } }
 function waText(){
   const items=SVC.filter(s=>sel[s.id]!=null);
   const sub=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
@@ -362,7 +361,6 @@ function waText(){
 function sendWa(){ const tel=$('#f-tel').value.replace(/\D/g,''); window.open('https://wa.me/'+(tel?('52'+tel):'')+'?text='+encodeURIComponent(waText()),'_blank'); }
 async function withBusy(btn,fn){ const t=btn.textContent; btn.disabled=true; btn.style.opacity=.55; btn.textContent='⏳ Generando…'; try{ await fn(); } finally{ btn.disabled=false; btn.style.opacity=''; btn.textContent=t; } }
 $('#a-share').onclick=e=>withBusy(e.currentTarget,shareImg);
-$('#a-dl').onclick=e=>withBusy(e.currentTarget,dlImg);
 $('#a-wa').onclick=sendWa;
 let tT; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),2600); }
 
