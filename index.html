@@ -270,9 +270,7 @@ function catOf(t){t=(t||'').trim();if(/cer[aá]mico/i.test(t))return 'Cerámico'
 function clean(n){return n.replace(/anios/gi,'años').replace(/ceramico/gi,'cerámico').replace(/correccion/gi,'Corrección').replace(/descontaminacion/gi,'descontaminación').replace(/\b1 años\b/g,'1 año');}
 function rowsToSVC(rows){const out=[];rows.forEach((r,i)=>{const name=(r[0]||'').trim(),tipo=(r[1]||'').trim(),price=priceVal(r[7]);if(!name||!tipo||tipo.toLowerCase()==='tipo'||price<=0)return;out.push({id:'s'+i,n:clean(name),c:catOf(tipo),price,inc:INC[name]||[]});});return out;}
 // Servicios que aún NO están en la hoja (se agregan a mano hasta que Mackey los meta a la hoja)
-const EXTRAS=[
- {id:'x-pulcera', n:'Pulido + cera', c:'Pulido', price:1600, inc:['Lavado y descontaminación','Corrección a 1 paso','Aplicación de cera / sellador','Brillo profundo','Protección hidrofóbica']},
-];
+const EXTRAS=[]; // vacío: todos los servicios ya vienen de la hoja de costos (incluido "Pulido + cera")
 async function loadSheet(){
   const cached=localStorage.getItem('vam_presup_svc');
   if(!SVC.length) $('#lista').innerHTML='<div class="loading">Cargando precios de tu hoja…</div>';
