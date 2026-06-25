@@ -45,6 +45,12 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
 .search svg{color:var(--muted);flex-shrink:0}
 .search input{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:15px}
 .search input::placeholder{color:#5b5f6b}
+.srcbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-2px 0 12px;font-size:11px;color:var(--muted)}
+.srcbar #srcnote{text-transform:uppercase;letter-spacing:.5px}
+.srcbar button{background:var(--bg2);border:1px solid var(--line);color:var(--text2);font:inherit;font-size:11px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;min-height:34px;flex-shrink:0;transition:border-color .15s,transform .1s}
+.srcbar button:active{transform:scale(.96)}
+@media(hover:hover){.srcbar button:hover{border-color:var(--accent);color:var(--text)}}
+.loading{text-align:center;color:var(--muted);padding:30px 10px;font-size:13px;line-height:1.5}
 
 .catg{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700;margin:16px 0 8px}
 .svc{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s}
@@ -140,11 +146,6 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
 </div></header>
 
 <main class="wrap">
-  <div class="seg" id="seg">
-    <button data-t="a" class="on"><span class="ic">🚗</span> Auto</button>
-    <button data-t="m"><span class="ic">🚙</span> Camioneta / SUV</button>
-  </div>
-
   <h2 class="sec">Datos del cliente</h2>
   <div class="fields">
     <div class="fld full"><label>Nombre del cliente</label><input id="f-nom" placeholder="Ej. Juan Pérez"></div>
@@ -155,6 +156,7 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
   </div>
 
   <h2 class="sec">Servicios</h2>
+  <div class="srcbar"><span id="srcnote">Cargando precios de tu hoja…</span><button id="b-refresh" type="button">↻ Actualizar</button></div>
   <div class="search">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
     <input id="f-buscar" type="search" placeholder="Buscar servicio…" autocomplete="off">
@@ -191,40 +193,52 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
 <div class="toast" id="toast"></div>
 
 <script>
-const SVC=[
- {id:'express',n:'Express Detail Wash',c:'Lavado',a:350,m:450,inc:['Enjuague a presión','Lavado con shampoo premium','Descontaminación básica','Secado con microfibra','Brillo final']},
- {id:'pul1p',n:'Pulido 1 Paso',c:'Pulido',a:800,m:1000,inc:['Lavado y descontaminación','Corrección 1 paso','Acabado brillo']},
- {id:'showroom',n:'Acabado Showroom',c:'Pulido',a:1200,m:1500,inc:['Lavado y descontaminación','Corrección 1 paso','Acabado brillo profundo','Efecto hidrofóbico','Protección UV aprox. 6 meses']},
- {id:'pul2p',n:'Pulido 2 Pasos',c:'Pulido',a:1200,m:1500,inc:['Lavado y descontaminación','Clay bar','Corrección paso 1 cutting','Corrección paso 2 refinado','Acabado alta gloss']},
- {id:'pul3en1',n:'Pulido 3-en-1',c:'Pulido',a:1500,m:1900,inc:['Lavado y descontaminación','Corrección 1 paso','Refinado de pintura','Acabado gloss alto brillo','Protección final']},
- {id:'cer-wrap',n:'Blindaje Cerámico para Wrap',c:'Cerámico',a:1200,m:1600,inc:['Lavado del wrap','Descontaminación de vinil','Aplicación cerámico especializado','Protección UV','Facilita limpieza futura']},
- {id:'cer1p1a',n:'1 Paso + Cerámico 1 Año',c:'Cerámico',a:2500,m:3200,inc:['Lavado y descontaminación','Eco Wash','Clay bar','Corrección 1 paso','Aplicación CanCoat Evo','Garantía 1 año','Inspección con luz']},
- {id:'cer-mate',n:'Cerámico Mate 2 Años',c:'Cerámico',a:3500,m:4500,inc:['Descontaminación','Clay bar','Preparación especial para mate','Aplicación cerámico mate','Garantía 2 años']},
- {id:'cer1p3a',n:'1 Paso + Cerámico 3 Años',c:'Cerámico',a:3800,m:4800,inc:['Lavado y descontaminación','Clay bar','Corrección 1 paso','Aplicación cerámico 3 años','Garantía 3 años','Reporte antes/después']},
- {id:'cer2p1a',n:'2 Pasos + Cerámico 1 Año',c:'Cerámico',a:4000,m:5000,inc:['Descontaminación completa','Clay bar','Corrección paso 1 cutting','Corrección paso 2','Aplicación CanCoat Evo','Garantía 1 año','Reporte fotográfico']},
- {id:'cer2p3a',n:'2 Pasos + Cerámico 3 Años',c:'Cerámico',a:5000,m:6200,inc:['Descontaminación completa','Clay bar','Corrección paso 1 cutting','Corrección paso 2 refinado','Aplicación cerámico 3 años','Garantía 3 años','Reporte HD']},
- {id:'cer2p5a',n:'2 Pasos + Cerámico 5 Años',c:'Cerámico',a:7000,m:9000,inc:['Descontaminación 4 etapas','Clay bar premium','Corrección 2 pasos nivel concurso','Aplicación Pure Evo 5 años','Garantía 5 años','Reporte HD','Kit de mantenimiento']},
- {id:'premium',n:'Premium — Gtecnic / Pure Evo Top',c:'Premium',a:13000,m:16000,inc:['Descontaminación completa 4 etapas','Corrección 2-3 pasos nivel concurso','Gtecnic o Pure Evo top tier','Garantía 7-10 años','Reporte HD','Kit mantenimiento premium']},
- {id:'int-cer',n:'Protección Cerámica Vestiduras',c:'Interior',a:800,m:1200,inc:['Limpieza previa de vestiduras','Aplicación cerámico para tela/piel','Protección UV','Barrera contra manchas','Garantía 1 año']},
- {id:'int-mant',n:'Vestiduras Mantenimiento',c:'Interior',a:1200,m:1500,inc:['Aspirado completo','Limpieza de tablero y consola','Limpieza de puertas','Vidrios interiores','Fragancia final']},
- {id:'int-avz',n:'Vestiduras Avanzado',c:'Interior',a:2800,m:3500,inc:['Extracción de asientos y tapetes','Limpieza química de plásticos','Tablero y consola','Cinturones','Desinfección con ozono','Fragancia de acabado']},
- {id:'motor',n:'Detallado de Motor',c:'Adicionales',a:400,m:500,inc:['Protección previa de componentes eléctricos','Aplicación de desengrasante','Enjuague a presión','Secado','Acondicionamiento de plásticos y mangueras']},
- {id:'faros',n:'Faros Relucientes',c:'Adicionales',a:500,m:600,inc:['Lijado progresivo por grados','Pulido mecánico','Sellado UV protector','Brillo restaurado','Protección aprox. 1 año']},
- {id:'moto',n:'Moto Detail Express',c:'Adicionales',a:200,m:250,inc:['Lavado profundo y descontaminación','Limpieza de rines y neumáticos','Cera de protección','Acondicionamiento de asiento','Acabado premium']},
-];
-const CATS=['Lavado','Pulido','Cerámico','Premium','Interior','Adicionales'];
 const $=s=>document.querySelector(s);
 const money=n=>'$'+Math.round(n).toLocaleString('es-MX');
-
-let tipo='a';            // a=auto, m=camioneta
-let desc=0;              // % de descuento
-let sel={};              // id -> precio (editado)
-let query='';
-
-// fecha hoy
+let desc=0, sel={}, query='';
 $('#f-fec').value=new Date().toISOString().slice(0,10);
 
-function priceOf(s){ return tipo==='a'?s.a:s.m; }
+/* ===== Precios EN VIVO desde tu Google Sheet de costos (una sola fuente) =====
+   Misma hoja que el dashboard de costos. Cambias un precio ahí → aquí se refleja. */
+const CSV_URL='https://docs.google.com/spreadsheets/d/1UqaOw2jmD24uN8avQisEeKCfYgDPEMtrLIHYhHXXpU0/gviz/tq?tqx=out:csv&gid=777960188';
+const CATS=['Cerámico','Pulido','Interior','Paquete','Adicionales'];
+let SVC=[];
+// alcances (lo que incluye) por nombre del servicio en la hoja
+const INC={
+ 'Ceramico mate 2 años':['Descontaminación','Clay bar','Preparación especial para mate','Aplicación cerámico mate','Garantía 2 años'],
+ '1 paso + ceramico 1 años':['Lavado y descontaminación','Eco Wash','Clay bar','Corrección 1 paso','Aplicación CanCoat Evo','Garantía 1 año','Inspección con luz'],
+ '1 paso + 3 años':['Lavado y descontaminación','Clay bar','Corrección 1 paso','Aplicación cerámico 3 años','Garantía 3 años','Reporte antes/después'],
+ '2 pasos + ceramico 1 año':['Descontaminación completa','Clay bar','Corrección paso 1 cutting','Corrección paso 2','Aplicación CanCoat Evo','Garantía 1 año','Reporte fotográfico'],
+ '2 pasos + 3 años':['Descontaminación completa','Clay bar','Corrección paso 1 cutting','Corrección paso 2 refinado','Aplicación cerámico 3 años','Garantía 3 años','Reporte HD'],
+ '2 pasos + 5 anios (doble capa)':['Descontaminación 4 etapas','Clay bar premium','Corrección 2 pasos nivel concurso','Aplicación Pure Evo 5 años','Garantía 5 años','Reporte HD','Kit de mantenimiento'],
+ 'Vestiduras mantenimiento':['Aspirado completo','Limpieza de tablero y consola','Limpieza de puertas','Vidrios interiores','Fragancia final'],
+ 'Vestiduras avanzado':['Extracción de asientos y tapetes','Limpieza química de plásticos','Tablero y consola','Cinturones','Desinfección con ozono','Fragancia de acabado'],
+ 'Pulido 3-1 (1 paso)':['Lavado y descontaminación','Corrección 1 paso','Refinado de pintura','Acabado gloss alto brillo','Protección final'],
+ 'Correccion de pintura (2 pasos)':['Lavado y descontaminación','Clay bar','Corrección paso 1 cutting','Corrección paso 2 refinado','Acabado alta gloss'],
+ 'Pulido + Vestiduras + motor':['Pulido exterior completo','Vestiduras interior','Limpieza de motor','Descontaminación','Acabado y protección'],
+ 'Lavado':['Enjuague a presión','Lavado con shampoo premium','Descontaminación básica','Secado con microfibra','Brillo final'],
+ 'Faros':['Lijado progresivo por grados','Pulido mecánico','Sellado UV protector','Brillo restaurado','Protección aprox. 1 año'],
+ 'Motor':['Protección de componentes eléctricos','Aplicación de desengrasante','Enjuague controlado','Secado','Acondicionamiento de plásticos'],
+ 'Cera + descontaminacion':['Lavado','Descontaminación química (hierro)','Clay bar','Aplicación de cera/sellador','Brillo y protección'],
+};
+function parseCSV(txt){const rows=[];let row=[],cur='',q=false;for(let i=0;i<txt.length;i++){const ch=txt[i];if(q){if(ch==='"'){if(txt[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur='';}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&txt[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur='';}else cur+=ch;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;}
+function priceVal(s){s=String(s||'').trim();if(!s)return 0;const n=parseFloat(s.replace(/[^\d.]/g,''));if(!isFinite(n))return 0;return s.includes('%')?Math.round(n/100):Math.round(n);}
+function catOf(t){t=(t||'').trim();if(/cer[aá]mico/i.test(t))return 'Cerámico';if(/pulido/i.test(t))return 'Pulido';if(/interior/i.test(t))return 'Interior';if(/paquete/i.test(t))return 'Paquete';return 'Adicionales';}
+function rowsToSVC(rows){const out=[];rows.forEach((r,i)=>{const name=(r[0]||'').trim(),tipo=(r[1]||'').trim(),price=priceVal(r[7]);if(!name||!tipo||tipo.toLowerCase()==='tipo'||price<=0)return;out.push({id:'s'+i,n:name,c:catOf(tipo),price,inc:INC[name]||[]});});return out;}
+async function loadSheet(){
+  const cached=localStorage.getItem('vam_presup_svc');
+  if(!SVC.length) $('#lista').innerHTML='<div class="loading">Cargando precios de tu hoja…</div>';
+  try{
+    const res=await fetch(CSV_URL,{cache:'no-store'});
+    const data=rowsToSVC(parseCSV(await res.text()));
+    if(data.length){ SVC=data; localStorage.setItem('vam_presup_svc',JSON.stringify(SVC)); $('#srcnote').textContent='Precios en vivo de tu hoja · '+SVC.length+' servicios'; }
+    else if(cached){ SVC=JSON.parse(cached); $('#srcnote').textContent='Usando precios guardados'; }
+  }catch(e){
+    if(cached){ SVC=JSON.parse(cached); $('#srcnote').textContent='Sin conexión · precios guardados'; }
+    else { $('#lista').innerHTML='<div class="loading">No se pudo leer la hoja. Revisa tu internet y dale ↻ Actualizar.</div>'; return; }
+  }
+  renderLista(); updateBar();
+}
 
 function renderLista(){
   const root=$('#lista'); root.innerHTML='';
@@ -236,8 +250,8 @@ function renderLista(){
       const on=sel[s.id]!=null;
       const row=document.createElement('div'); row.className='svc'+(on?' on':'');
       row.innerHTML=`<div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="#050505" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="nm"><b>${s.n}</b><small>${s.inc.length} puntos incluidos</small></div>
-        <div class="pr"><span>$</span><input type="number" inputmode="numeric" value="${on?sel[s.id]:priceOf(s)}" data-id="${s.id}"></div>`;
+        <div class="nm"><b>${s.n}</b><small>${s.inc.length?s.inc.length+' puntos incluidos':'Precio de tu hoja'}</small></div>
+        <div class="pr"><span>$</span><input type="number" inputmode="numeric" value="${on?sel[s.id]:s.price}" data-id="${s.id}"></div>`;
       // toggle al tocar (menos en el input)
       row.addEventListener('click',e=>{ if(e.target.tagName==='INPUT')return; toggle(s); });
       const inp=row.querySelector('input');
@@ -249,7 +263,7 @@ function renderLista(){
 }
 function toggle(s){
   if(sel[s.id]!=null) delete sel[s.id];
-  else sel[s.id]=priceOf(s);
+  else sel[s.id]=s.price;
   renderLista(); updateBar();
 }
 function updateBar(){
@@ -261,14 +275,7 @@ function updateBar(){
   $('#b-ver').disabled=ids.length===0;
 }
 
-$('#seg').addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b)return;
-  tipo=b.dataset.t;
-  document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b));
-  // re-precia los seleccionados al nuevo tipo
-  Object.keys(sel).forEach(id=>{ const s=SVC.find(x=>x.id===id); sel[id]=priceOf(s); });
-  renderLista(); updateBar();
-});
+$('#b-refresh').onclick=()=>loadSheet();
 $('#f-buscar').addEventListener('input',e=>{ query=e.target.value.trim().toLowerCase(); renderLista(); });
 $('#segDisc').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return; desc=+b.dataset.d; document.querySelectorAll('#segDisc button').forEach(x=>x.classList.toggle('on',x===b)); updateBar(); });
 
@@ -282,7 +289,6 @@ function buildQuote(){
   const veh=$('#f-veh').value.trim()||'—';
   const fec=$('#f-fec').value||new Date().toISOString().slice(0,10);
   const notas=$('#f-notas').value.trim();
-  const tipoLbl=tipo==='a'?'Auto':'Camioneta / SUV';
   const folio='VAM-'+fec.slice(2).replace(/-/g,'')+'-'+new Date().toTimeString().slice(0,5).replace(':','');
   const vig=fmtDate(addDays(fec,15));
   const items=SVC.filter(s=>sel[s.id]!=null);
@@ -297,7 +303,7 @@ function buildQuote(){
    </div>
    <div class="q-cli">
      <div class="r"><b>Cliente</b>${nom}</div>
-     <div class="r"><b>Vehículo</b>${veh} · ${tipoLbl}</div>
+     <div class="r"><b>Vehículo</b>${veh}</div>
      <div class="r"><b>Placa</b>${pla}</div>
      <div class="r"><b>Vigencia</b>15 días (al ${vig})</div>
    </div>
@@ -331,10 +337,9 @@ function waText(){
   const sub=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
   const fin=Math.round(sub*(1-desc/100));
   const nom=$('#f-nom').value.trim(), veh=$('#f-veh').value.trim(), pla=$('#f-pla').value.trim().toUpperCase();
-  const tipoLbl=tipo==='a'?'Auto':'Camioneta/SUV';
   let t='*VAM GARAGE — Cotización*\n';
   if(nom)t+='Cliente: '+nom+'\n';
-  if(veh)t+='Vehículo: '+veh+' ('+tipoLbl+')\n';
+  if(veh)t+='Vehículo: '+veh+'\n';
   if(pla)t+='Placa: '+pla+'\n';
   t+='\n';
   items.forEach(s=>{ t+='• '+s.n+' — '+money(sel[s.id])+'\n'; });
@@ -352,7 +357,7 @@ $('#a-dl').onclick=e=>withBusy(e.currentTarget,dlImg);
 $('#a-wa').onclick=sendWa;
 let tT; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),2600); }
 
-renderLista(); updateBar();
+loadSheet();
 </script>
 </body>
 </html>
