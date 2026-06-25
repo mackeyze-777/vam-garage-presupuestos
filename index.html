@@ -51,6 +51,19 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
 .srcbar button:active{transform:scale(.96)}
 @media(hover:hover){.srcbar button:hover{border-color:var(--accent);color:var(--text)}}
 .loading{text-align:center;color:var(--muted);padding:30px 10px;font-size:13px;line-height:1.5}
+.addrow{display:flex;gap:8px;margin-bottom:10px}
+.addrow input{background:var(--bg2);border:1px solid var(--line);border-radius:10px;height:46px;padding:0 12px;color:var(--text);font:inherit;font-size:14px}
+.addrow input:focus{outline:none;border-color:var(--accent)}
+.addrow #c-nom{flex:1;min-width:0}
+.addrow #c-pre{width:84px;text-align:right}
+.addrow #c-add{flex-shrink:0;background:var(--bg3);border:1px solid var(--line);color:var(--text);font:inherit;font-weight:700;font-size:14px;padding:0 14px;border-radius:10px;cursor:pointer;min-height:46px;transition:border-color .15s,transform .1s}
+.addrow #c-add:active{transform:scale(.97)}
+@media(hover:hover){.addrow #c-add:hover{border-color:var(--accent)}}
+.citem{display:flex;align-items:center;gap:10px;background:rgba(232,23,138,.06);border:1px solid var(--accent);border-radius:11px;padding:11px 13px;margin-bottom:8px}
+.citem .cn{flex:1;min-width:0;font-weight:600;font-size:14px;word-break:break-word}
+.citem .cp{font-weight:700;font-size:14px;white-space:nowrap}
+.citem .cx{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--muted);font-size:17px;cursor:pointer;display:grid;place-items:center}
+.citem .cx:active{transform:scale(.92)}
 
 .catg{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-weight:700;margin:16px 0 8px}
 .svc{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s}
@@ -163,6 +176,14 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
   </div>
   <div id="lista"></div>
 
+  <h2 class="sec">Servicio manual (opcional)</h2>
+  <div class="addrow">
+    <input id="c-nom" placeholder="Ej. Franjas / pinstripe" autocomplete="off">
+    <input id="c-pre" type="number" inputmode="numeric" placeholder="$">
+    <button id="c-add" type="button">+ Agregar</button>
+  </div>
+  <div id="c-list"></div>
+
   <h2 class="sec">Descuento</h2>
   <div class="seg" id="segDisc">
     <button data-d="0" class="on">Ninguno</button>
@@ -194,7 +215,28 @@ h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
 <script>
 const $=s=>document.querySelector(s);
 const money=n=>'$'+Math.round(n).toLocaleString('es-MX');
-let desc=0, sel={}, query='';
+const esc=s=>String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+let desc=0, sel={}, query='', customs=[];
+function quoteLines(){
+  const a=SVC.filter(s=>sel[s.id]!=null).map(s=>({n:s.n,price:+sel[s.id]||0,inc:s.inc}));
+  const b=customs.map(c=>({n:c.n,price:+c.price||0,inc:[]}));
+  return a.concat(b);
+}
+function renderCustoms(){
+  const root=$('#c-list'); root.innerHTML='';
+  customs.forEach((c,i)=>{
+    const el=document.createElement('div'); el.className='citem';
+    el.innerHTML=`<span class="cn">${esc(c.n)}</span><span class="cp">${money(c.price)}</span><button class="cx" type="button" aria-label="Quitar">×</button>`;
+    el.querySelector('.cx').onclick=()=>{ customs.splice(i,1); renderCustoms(); updateBar(); };
+    root.appendChild(el);
+  });
+}
+function addCustom(){
+  const n=$('#c-nom').value.trim(), p=+$('#c-pre').value||0;
+  if(!n||p<=0){ toast('Pon nombre y costo'); return; }
+  customs.push({n,price:p}); $('#c-nom').value=''; $('#c-pre').value='';
+  renderCustoms(); updateBar(); $('#c-nom').focus();
+}
 $('#f-fec').value=new Date().toISOString().slice(0,10);
 
 /* ===== Precios EN VIVO desde tu Google Sheet de costos (una sola fuente) =====
@@ -275,17 +317,19 @@ function toggle(s){
   renderLista(); updateBar();
 }
 function updateBar(){
-  const ids=Object.keys(sel);
-  const sub=ids.reduce((a,id)=>a+(+sel[id]||0),0);
+  const lines=quoteLines();
+  const sub=lines.reduce((a,l)=>a+l.price,0);
   const fin=Math.round(sub*(1-desc/100));
-  $('#b-cnt').textContent=ids.length;
+  $('#b-cnt').textContent=lines.length;
   $('#b-tot').textContent=money(fin);
-  $('#b-ver').disabled=ids.length===0;
+  $('#b-ver').disabled=lines.length===0;
 }
 
 $('#b-refresh').onclick=()=>loadSheet();
 $('#f-buscar').addEventListener('input',e=>{ query=e.target.value.trim().toLowerCase(); renderLista(); });
 $('#segDisc').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return; desc=+b.dataset.d; document.querySelectorAll('#segDisc button').forEach(x=>x.classList.toggle('on',x===b)); updateBar(); });
+$('#c-add').onclick=addCustom;
+$('#c-pre').addEventListener('keydown',e=>{ if(e.key==='Enter') addCustom(); });
 
 // ===== Cotización =====
 const fmtDate=iso=>{const[y,m,d]=iso.split('-');return `${d}/${m}/${y}`};
@@ -299,10 +343,10 @@ function buildQuote(){
   const notas=$('#f-notas').value.trim();
   const folio='VAM-'+fec.slice(2).replace(/-/g,'')+'-'+new Date().toTimeString().slice(0,5).replace(':','');
   const vig=fmtDate(addDays(fec,15));
-  const items=SVC.filter(s=>sel[s.id]!=null);
-  const sub=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const items=quoteLines();
+  const sub=items.reduce((a,l)=>a+l.price,0);
   const fin=Math.round(sub*(1-desc/100)), dm=sub-fin;
-  const rows=items.map(s=>`<div class="q-it"><div class="top"><b>${s.n}</b><span class="p">${money(sel[s.id])}</span></div><ul>${s.inc.map(i=>`<li><span>${i}</span></li>`).join('')}</ul></div>`).join('');
+  const rows=items.map(l=>`<div class="q-it"><div class="top"><b>${esc(l.n)}</b><span class="p">${money(l.price)}</span></div>${l.inc&&l.inc.length?`<ul>${l.inc.map(i=>`<li><span>${i}</span></li>`).join('')}</ul>`:''}</div>`).join('');
   $('#quote').innerHTML=`
    <div class="q-band"></div>
    <div class="q-head">
@@ -341,8 +385,8 @@ async function shareImg(){
   }catch(e){ try{ dl(await renderPng()); toast('Imagen descargada'); }catch(_){ toast('No se pudo generar la imagen'); } }
 }
 function waText(){
-  const items=SVC.filter(s=>sel[s.id]!=null);
-  const sub=items.reduce((a,s)=>a+(+sel[s.id]||0),0);
+  const items=quoteLines();
+  const sub=items.reduce((a,l)=>a+l.price,0);
   const fin=Math.round(sub*(1-desc/100));
   const nom=$('#f-nom').value.trim(), veh=$('#f-veh').value.trim(), pla=$('#f-pla').value.trim().toUpperCase();
   let t='*VAM GARAGE — Cotización*\n';
@@ -350,7 +394,7 @@ function waText(){
   if(veh)t+='Vehículo: '+veh+'\n';
   if(pla)t+='Placa: '+pla+'\n';
   t+='\n';
-  items.forEach(s=>{ t+='• '+s.n+' — '+money(sel[s.id])+'\n'; });
+  items.forEach(l=>{ t+='• '+l.n+' — '+money(l.price)+'\n'; });
   if(desc>0){ t+='Subtotal: '+money(sub)+'\n'; t+='Descuento '+desc+'%: - '+money(sub-fin)+'\n'; }
   t+='\n*TOTAL: '+money(fin)+' MXN*\n';
   t+='Vigencia: 15 días · sujeta a inspección física.\n';
