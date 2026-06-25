@@ -220,6 +220,7 @@ const INC={
  'Faros':['Lijado progresivo por grados','Pulido mecánico','Sellado UV protector','Brillo restaurado','Protección aprox. 1 año'],
  'Motor':['Protección de componentes eléctricos','Aplicación de desengrasante','Enjuague controlado','Secado','Acondicionamiento de plásticos'],
  'Cera + descontaminacion':['Lavado','Descontaminación química (hierro)','Clay bar','Aplicación de cera/sellador','Brillo y protección'],
+ 'Pulido + cera':['Lavado y descontaminación','Corrección a 1 paso','Aplicación de cera / sellador','Brillo profundo','Protección hidrofóbica'],
 };
 function parseCSV(txt){const rows=[];let row=[],cur='',q=false;for(let i=0;i<txt.length;i++){const ch=txt[i];if(q){if(ch==='"'){if(txt[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur='';}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&txt[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur='';}else cur+=ch;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;}
 function priceVal(s){s=String(s||'').trim();if(!s)return 0;const n=parseFloat(s.replace(/[^\d.]/g,''));if(!isFinite(n))return 0;return s.includes('%')?Math.round(n/100):Math.round(n);}
@@ -229,7 +230,7 @@ function clean(n){return n.replace(/anios/gi,'años').replace(/ceramico/gi,'cer�
 function rowsToSVC(rows){const out=[];rows.forEach((r,i)=>{const name=(r[0]||'').trim(),tipo=(r[1]||'').trim(),price=priceVal(r[7]);if(!name||!tipo||tipo.toLowerCase()==='tipo'||price<=0)return;out.push({id:'s'+i,n:clean(name),c:catOf(tipo),price,inc:INC[name]||[]});});return out;}
 // Servicios que aún NO están en la hoja (se agregan a mano hasta que Mackey los meta a la hoja)
 const EXTRAS=[
- {id:'x-pul1cera', n:'Pulido 1 paso + Cera', c:'Pulido', price:1600, inc:['Lavado y descontaminación','Corrección a 1 paso','Aplicación de cera / sellador','Brillo profundo','Protección hidrofóbica']},
+ {id:'x-pulcera', n:'Pulido + cera', c:'Pulido', price:1600, inc:['Lavado y descontaminación','Corrección a 1 paso','Aplicación de cera / sellador','Brillo profundo','Protección hidrofóbica']},
 ];
 async function loadSheet(){
   const cached=localStorage.getItem('vam_presup_svc');
