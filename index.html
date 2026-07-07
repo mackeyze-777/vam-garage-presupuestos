@@ -270,17 +270,38 @@ function priceVal(s){s=String(s||'').trim();if(!s)return 0;const n=parseFloat(s.
 function catOf(t){t=(t||'').trim();if(/cer[aá]mico/i.test(t))return 'Cerámico';if(/pulido/i.test(t))return 'Pulido';if(/interior/i.test(t))return 'Interior';if(/paquete/i.test(t))return 'Paquete';return 'Adicionales';}
 // Limpia ortografía de los nombres de la hoja solo para mostrar (no cambia la hoja)
 function clean(n){return n.replace(/anios/gi,'años').replace(/ceramico/gi,'cerámico').replace(/correccion/gi,'Corrección').replace(/descontaminacion/gi,'descontaminación').replace(/\b1 años\b/g,'1 año');}
-function rowsToSVC(rows){const out=[];rows.forEach((r,i)=>{const name=(r[0]||'').trim(),tipo=(r[1]||'').trim(),price=priceVal(r[7]);if(!name||!tipo||tipo.toLowerCase()==='tipo'||price<=0)return;out.push({id:'s'+i,n:clean(name),c:catOf(tipo),price,inc:INC[name]||[]});});return out;}
+// Nombres ÉPICOS (jul-2026): el cliente no compara "Armadura VAM" en Google, sí compara "cerámico 3 años".
+// Escalera: ESCUDO (1 año) → ARMADURA (3 años) → TITÁN (5 años). Clave = nombre de la hoja en minúsculas.
+const EPIC={
+ '1 paso + cerámico 1 año':'ESCUDO VAM · Cerámico 1 año (corrección 1 paso)',
+ '2 pasos + cerámico 1 año':'ESCUDO VAM+ · Cerámico 1 año (corrección profunda 2 pasos)',
+ '1 paso + 3 años':'ARMADURA VAM · Cerámico 3 años (corrección 1 paso)',
+ '2 pasos + 3 años':'ARMADURA VAM+ · Cerámico 3 años (corrección profunda 2 pasos)',
+ 'cerámico mate 2 años':'ARMADURA MATE · Cerámico mate 2 años',
+ '2 pasos + 5 años':'TITÁN VAM · Cerámico 5 años doble capa (corrección profunda)',
+ 'pulido + cera':'EFECTO SHOWROOM · Pulido + Encerado',
+ 'pulido 3-1 (1 paso)':'SHOWROOM EXPRESS · Pulido 3-en-1',
+ 'corrección de pintura (2 pasos)':'CIRUGÍA DE PINTURA · Corrección 2 pasos',
+ 'vestiduras mantenimiento':'INTERIOR FRESH · Vestiduras mantenimiento',
+ 'vestiduras avanzado':'INTERIOR CERO KM · Vestiduras avanzado',
+ 'pulido + vestiduras + motor':'TRANSFORMACIÓN TOTAL · Pulido + Vestiduras + Motor',
+ 'lavado':'LAVADO TÉCNICO VAM',
+ 'faros':'VISIÓN NUEVA · Restauración de faros',
+ 'motor':'SALA DE MÁQUINAS · Detallado de motor',
+ 'cera + descontaminación':'SELLO EXPRESS · Cera + descontaminación',
+};
+function epic(n){return EPIC[n.trim().toLowerCase()]||n;}
+function rowsToSVC(rows){const out=[];rows.forEach((r,i)=>{const name=(r[0]||'').trim(),tipo=(r[1]||'').trim(),price=priceVal(r[7]);if(!name||!tipo||tipo.toLowerCase()==='tipo'||price<=0)return;out.push({id:'s'+i,n:epic(clean(name)),c:catOf(tipo),price,inc:INC[name]||[]});});return out;}
 // Servicios que aún NO están en la hoja (se agregan a mano hasta que Mackey los meta a la hoja)
 // PPF: precios en rango → se pone el "desde" (extremo bajo) y el precio es editable en pantalla.
 // Kit Interior: servicio por piezas $1,000–$2,500 → default $1,000 editable.
 const EXTRAS=[
-  {id:'ppf1',n:'PPF Parcial Front · Profilm 3 años',c:'PPF',price:7000,inc:['Facia delantera','Faros','Parcial de cofre y salpicaderas','Película Profilm','Duración aprox. 3 años']},
-  {id:'ppf2',n:'PPF Parcial Front · 3M 5 años',c:'PPF',price:9000,inc:['Facia delantera','Faros','Parcial de cofre y salpicaderas','Película 3M','Duración aprox. 5 años']},
-  {id:'ppf3',n:'PPF Full Front · Profilm 3 años',c:'PPF',price:12000,inc:['Salpicaderas','Cofre','Facia delantera','Retrovisores','Faros','Película Profilm','Duración aprox. 3 años']},
-  {id:'ppf4',n:'PPF Full Front · 3M 5 años',c:'PPF',price:15000,inc:['Salpicaderas','Cofre','Facia delantera','Retrovisores','Faros','Película 3M','Duración aprox. 5 años']},
-  {id:'ppf5',n:'PPF Full Body · Profilm 3 años',c:'PPF',price:32000,inc:['Protección completa de carrocería','Película Profilm','Duración aprox. 3 años','Precio final según detalles a cubrir']},
-  {id:'ppf6',n:'PPF Full Body · 3M 5 años',c:'PPF',price:43000,inc:['Protección completa de carrocería','Película 3M','Duración aprox. 5 años','Precio final según detalles a cubrir']},
+  {id:'ppf1',n:'BLINDAJE INVISIBLE · PPF Parcial Front · Profilm 3 años',c:'PPF',price:7000,inc:['Facia delantera','Faros','Parcial de cofre y salpicaderas','Película Profilm','Duración aprox. 3 años']},
+  {id:'ppf2',n:'BLINDAJE INVISIBLE · PPF Parcial Front · 3M 5 años',c:'PPF',price:9000,inc:['Facia delantera','Faros','Parcial de cofre y salpicaderas','Película 3M','Duración aprox. 5 años']},
+  {id:'ppf3',n:'BLINDAJE INVISIBLE · PPF Full Front · Profilm 3 años',c:'PPF',price:12000,inc:['Salpicaderas','Cofre','Facia delantera','Retrovisores','Faros','Película Profilm','Duración aprox. 3 años']},
+  {id:'ppf4',n:'BLINDAJE INVISIBLE · PPF Full Front · 3M 5 años',c:'PPF',price:15000,inc:['Salpicaderas','Cofre','Facia delantera','Retrovisores','Faros','Película 3M','Duración aprox. 5 años']},
+  {id:'ppf5',n:'BLINDAJE INVISIBLE · PPF Full Body · Profilm 3 años',c:'PPF',price:32000,inc:['Protección completa de carrocería','Película Profilm','Duración aprox. 3 años','Precio final según detalles a cubrir']},
+  {id:'ppf6',n:'BLINDAJE INVISIBLE · PPF Full Body · 3M 5 años',c:'PPF',price:43000,inc:['Protección completa de carrocería','Película 3M','Duración aprox. 5 años','Precio final según detalles a cubrir']},
   {id:'kitint1',n:'Kit Interior (por piezas)',c:'Interior',price:1000,inc:['Detallado de interior a la medida','Precio según número de piezas']},
 ];
 async function loadSheet(){
